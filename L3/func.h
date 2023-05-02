@@ -41,4 +41,6 @@ void apply_gamma_correction(RGBTRIPLE* pixels, int width, int height, int row_si
 int compare(const void* a, const void* b);
 void apply_median_filter(RGBTRIPLE* pixels, int width, int height, int row_size, int filter_size);
 int read_image(const char* input_file_name, BITMAPFILEHEADER* file_header, BITMAPINFOHEADER* info_header, RGBTRIPLE** pixels, int* row_size);
+int present_menu();
+void process_choice(int choice, BITMAPFILEHEADER file_header, BITMAPINFOHEADER info_header, RGBTRIPLE* pixels, RGBTRIPLE* original_pixels, int row_size);
 #endif //INC_5_1_FUNCTIONS_H
