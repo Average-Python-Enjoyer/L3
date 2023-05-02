@@ -63,5 +63,5 @@ void apply_median_filter_to_pixel(MedianFilterData* data, int i, int j);
 int read_image(const char* input_file_name, BITMAPFILEHEADER* file_header, BITMAPINFOHEADER* info_header, RGBTRIPLE** pixels, int* row_size);
 int present_menu();
 void add_pixel_to_window(MedianFilterWindowData* data, int i, int j, int k, int l);
-void process_choice(int choice, BITMAPFILEHEADER file_header, BITMAPINFOHEADER info_header, RGBTRIPLE* pixels, RGBTRIPLE* original_pixels, int row_size);
+void process_choice(int choice, BITMAPFILEHEADER file_header, BITMAPINFOHEADER info_header, RGBTRIPLE* pixels, const RGBTRIPLE* original_pixels, int row_size);
 #endif //INC_5_1_FUNCTIONS_H

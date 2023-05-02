@@ -8,7 +8,7 @@ void negative(RGBTRIPLE* pixel) {
     pixel->rgbtRed = ~pixel->rgbtRed;
 }
 void black_and_white(RGBTRIPLE* pixel) {
-    float gray = round((pixel->rgbtBlue + pixel->rgbtGreen + pixel->rgbtRed) / 3.0f);
+    float gray = roundf((pixel->rgbtBlue + pixel->rgbtGreen + pixel->rgbtRed) / 3.0f);
     pixel->rgbtBlue = (unsigned char)gray;
     pixel->rgbtGreen = (unsigned char)gray;
     pixel->rgbtRed = (unsigned char)gray;
@@ -93,7 +93,7 @@ void add_pixel_to_window(MedianFilterWindowData* data, int i, int j, int k, int 
     int x = j + l;
     int y = i + k;
     if (x >= 0 && x < data->width && y >= 0 && y < data->height) {
-        RGBTRIPLE* pixel = data->temp_pixels + data->row_size / sizeof(RGBTRIPLE) * y + x;
+        const RGBTRIPLE* pixel = data->temp_pixels + data->row_size / sizeof(RGBTRIPLE) * y + x;
         (*data->window_red)[*data->window_index] = pixel->rgbtRed;
         (*data->window_green)[*data->window_index] = pixel->rgbtGreen;
         (*data->window_blue)[*data->window_index] = pixel->rgbtBlue;
@@ -142,7 +142,7 @@ int present_menu() {
     return choice;
 }
 
-void process_choice(int choice, BITMAPFILEHEADER file_header, BITMAPINFOHEADER info_header, RGBTRIPLE* pixels, RGBTRIPLE* original_pixels, int row_size) {
+void process_choice(int choice, BITMAPFILEHEADER file_header, BITMAPINFOHEADER info_header, RGBTRIPLE* pixels, const RGBTRIPLE* original_pixels, int row_size) {
     char output_file_name[256];
     printf("\033[0;32m Enter the name of the output file: \033[0m");
     scanf("%s", output_file_name);
