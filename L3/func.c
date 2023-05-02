@@ -8,10 +8,10 @@ void negative(RGBTRIPLE* pixel) {
     pixel->rgbtRed = ~pixel->rgbtRed;
 }
 void black_and_white(RGBTRIPLE* pixel) {
-    float gray = (pixel->rgbtBlue + pixel->rgbtGreen + pixel->rgbtRed) / 3.0f;
-    pixel->rgbtBlue = gray;
-    pixel->rgbtGreen = gray;
-    pixel->rgbtRed = gray;
+    float gray = round((pixel->rgbtBlue + pixel->rgbtGreen + pixel->rgbtRed) / 3.0f);
+    pixel->rgbtBlue = (unsigned char)gray;
+    pixel->rgbtGreen = (unsigned char)gray;
+    pixel->rgbtRed = (unsigned char)gray;
 }
 void apply_negative(RGBTRIPLE* pixels, int width, int height, int row_size) {
     for (int i = 0; i < height; i++) {
@@ -27,7 +27,7 @@ void apply_black_and_white(RGBTRIPLE* pixels, int width, int height, int row_siz
         }
     }
 }
-void save_image(const char* file_name, BITMAPFILEHEADER file_header, BITMAPINFOHEADER info_header, RGBTRIPLE* pixels, int row_size) {
+void save_image(const char* file_name, BITMAPFILEHEADER file_header, BITMAPINFOHEADER info_header, const RGBTRIPLE* pixels, int row_size) {
     FILE* output_file = fopen(file_name, "wb");
     fwrite(&file_header, sizeof(BITMAPFILEHEADER), 1, output_file);
     fwrite(&info_header, sizeof(BITMAPINFOHEADER), 1, output_file);
@@ -41,14 +41,14 @@ void apply_gamma_correction(RGBTRIPLE* pixels, int width, int height, int row_si
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
             RGBTRIPLE* pixel = pixels + row_size / sizeof(RGBTRIPLE) * i + j;
-            pixel->rgbtBlue = 255 * pow((pixel->rgbtBlue / 255.0), gamma);
-            pixel->rgbtGreen = 255 * pow((pixel->rgbtGreen / 255.0), gamma);
-            pixel->rgbtRed = 255 * pow((pixel->rgbtRed / 255.0), gamma);
+            pixel->rgbtBlue = (unsigned char)(round(255 * pow((pixel->rgbtBlue / 255.0), gamma)));
+            pixel->rgbtGreen = (unsigned char)(round(255 * pow((pixel->rgbtGreen / 255.0), gamma)));
+            pixel->rgbtRed = (unsigned char)(round(255 * pow((pixel->rgbtRed / 255.0), gamma)));
         }
     }
 }
 int compare(const void* a, const void* b) {
-    return (*(unsigned char*)a - *(unsigned char*)b);
+    return (*(const unsigned char*)a - *(const unsigned char*)b);
 }
 void apply_median_filter(RGBTRIPLE* pixels, int width, int height, int row_size, int filter_size) {
     RGBTRIPLE* temp_pixels = malloc(row_size * height);
@@ -191,6 +191,12 @@ void process_choice(int choice, BITMAPFILEHEADER file_header, BITMAPINFOHEADER i
                 printf("\033[0;33m Invalid choice\n \033[0m");
                 break;
             }
+    default:
+        printf("\033[0;33m Invalid choice\n \033[0m");
+        break;
+        
         }
+
     }
+
 }
