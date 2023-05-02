@@ -151,11 +151,28 @@ void process_choice(int choice, BITMAPFILEHEADER file_header, BITMAPINFOHEADER i
         save_image(output_file_name, file_header, info_header, pixels, row_size);
         memcpy(pixels, original_pixels, row_size * info_header.biHeight);
         break;
-    
-    default:
-        printf("\033[0;33m Invalid choice\n \033[0m");
-        break;
-        
+    case 3:
+        printf("\033[0;32m Enter the value for gamma correction: \033[0m");
+        float gamma;
+        scanf("%f", &gamma);
+        while (gamma <= 0) {
+            printf("\033[0;33m Error: gamma value must be greater than 0\n \033[0m");
+            printf("\033[0;32m Enter the value for gamma correction: \033[0m");
+            scanf("%f", &gamma);
         }
+        apply_gamma_correction(pixels, info_header.biWidth, info_header.biHeight, row_size, gamma);
+        break;
+    case 4:
+        printf("\033[0;32m Enter the size of the median filter: \033[0m");
+        int filter_size;
+        scanf("%d", &filter_size);
+        while (filter_size < 3 || filter_size > 19) {
+            printf("\033[0;33m Error: filter size must be between 3 and 19\n \033[0m");
+            printf("\033[0;32m Enter the size of the median filter: \033[0m");
+            scanf("%d", &filter_size);
+        }
+        apply_median_filter(pixels, info_header.biWidth, info_header.biHeight, row_size, filter_size);
+        break;
+    }            
 }
 
