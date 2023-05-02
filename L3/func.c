@@ -57,36 +57,42 @@ void apply_median_filter(RGBTRIPLE* pixels, int width, int height, int row_size,
     int half_filter_size = filter_size / 2;
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
-            unsigned char* window_red = malloc(filter_size * filter_size * sizeof(unsigned char));
-            unsigned char* window_green = malloc(filter_size * filter_size * sizeof(unsigned char));
-            unsigned char* window_blue = malloc(filter_size * filter_size * sizeof(unsigned char));
-            int window_index = 0;
-            for (int k = -half_filter_size; k <= half_filter_size; k++) {
-                for (int l = -half_filter_size; l <= half_filter_size; l++) {
-                    int x = j + l;
-                    int y = i + k;
-                    if (x >= 0 && x < width && y >= 0 && y < height) {
-                        RGBTRIPLE* pixel = temp_pixels + row_size / sizeof(RGBTRIPLE) * y + x;
-                        window_red[window_index] = pixel->rgbtRed;
-                        window_green[window_index] = pixel->rgbtGreen;
-                        window_blue[window_index] = pixel->rgbtBlue;
-                        window_index++;
-                    }
-                }
-            }
-            qsort(window_red, window_index, sizeof(unsigned char), compare);
-            qsort(window_green, window_index, sizeof(unsigned char), compare);
-            qsort(window_blue, window_index, sizeof(unsigned char), compare);
-            RGBTRIPLE* pixel = pixels + row_size / sizeof(RGBTRIPLE) * i + j;
-            pixel->rgbtRed = window_red[window_index / 2];
-            pixel->rgbtGreen = window_green[window_index / 2];
-            pixel->rgbtBlue = window_blue[window_index / 2];
-            free(window_red);
-            free(window_green);
-            free(window_blue);
+            apply_median_filter_to_pixel(temp_pixels, pixels, width, height, row_size, filter_size, half_filter_size, i, j);
         }
     }
     free(temp_pixels);
+}
+void apply_median_filter_to_pixel(RGBTRIPLE* temp_pixels, RGBTRIPLE* pixels, int width, int height, int row_size, int filter_size, int half_filter_size, int i, int j) {
+    unsigned char* window_red = malloc(filter_size * filter_size * sizeof(unsigned char));
+    unsigned char* window_green = malloc(filter_size * filter_size * sizeof(unsigned char));
+    unsigned char* window_blue = malloc(filter_size * filter_size * sizeof(unsigned char));
+    int window_index = 0;
+    for (int k = -half_filter_size; k <= half_filter_size; k++) {
+        for (int l = -half_filter_size; l <= half_filter_size; l++) {
+            add_pixel_to_window(temp_pixels, width, height, row_size, i, j, k, l, &window_index, &window_red, &window_green, &window_blue);
+        }
+    }
+    qsort(window_red, window_index, sizeof(unsigned char), compare);
+    qsort(window_green, window_index, sizeof(unsigned char), compare);
+    qsort(window_blue, window_index, sizeof(unsigned char), compare);
+    RGBTRIPLE* pixel = pixels + row_size / sizeof(RGBTRIPLE) * i + j;
+    pixel->rgbtRed = window_red[window_index / 2];
+    pixel->rgbtGreen = window_green[window_index / 2];
+    pixel->rgbtBlue = window_blue[window_index / 2];
+    free(window_red);
+    free(window_green);
+    free(window_blue);
+}
+void add_pixel_to_window(RGBTRIPLE* temp_pixels, int width, int height, int row_size, int i, int j, int k, int l, int* window_index, unsigned char** window_red, unsigned char** window_green, unsigned char** window_blue) {
+    int x = j + l;
+    int y = i + k;
+    if (x >= 0 && x < width && y >= 0 && y < height) {
+        RGBTRIPLE* pixel = temp_pixels + row_size / sizeof(RGBTRIPLE) * y + x;
+        (*window_red)[*window_index] = pixel->rgbtRed;
+        (*window_green)[*window_index] = pixel->rgbtGreen;
+        (*window_blue)[*window_index] = pixel->rgbtBlue;
+        (*window_index)++;
+    }
 }
 int read_image(const char* input_file_name, BITMAPFILEHEADER* file_header, BITMAPINFOHEADER* info_header, RGBTRIPLE** pixels, int* row_size) {
     FILE* input_file = fopen(input_file_name, "rb");
@@ -145,58 +151,11 @@ void process_choice(int choice, BITMAPFILEHEADER file_header, BITMAPINFOHEADER i
         save_image(output_file_name, file_header, info_header, pixels, row_size);
         memcpy(pixels, original_pixels, row_size * info_header.biHeight);
         break;
-    case 3:
-        printf("\033[0;32m Enter the number of effects to apply: \033[0m");
-        int num_effects;
-        scanf("%d", &num_effects);
-        for (int i = 0; i < num_effects; i++) {
-            printf("\033[0;37m Select an effect to apply:\n");
-            printf("1. Negative\n");
-            printf("2. Black and White\n");
-            printf("3. Gamma Correction\n");
-            printf("4. Median Filter\n \033[0m");
-            printf("\033[0;32m Enter your choice: \033[0m");
-            int effect_choice;
-            scanf("%d", &effect_choice);
-            switch (effect_choice) {
-            case 1:
-                apply_negative(pixels, info_header.biWidth, info_header.biHeight, row_size);
-                break;
-            case 2:
-                apply_black_and_white(pixels, info_header.biWidth, info_header.biHeight, row_size);
-                break;
-            case 3:
-                printf("\033[0;32m Enter the value for gamma correction: \033[0m");
-                float gamma;
-                scanf("%f", &gamma);
-                while (gamma <= 0) {
-                    printf("\033[0;33m Error: gamma value must be greater than 0\n \033[0m");
-                    printf("\033[0;32m Enter the value for gamma correction: \033[0m");
-                    scanf("%f", &gamma);
-                }
-                apply_gamma_correction(pixels, info_header.biWidth, info_header.biHeight, row_size, gamma);
-                break;
-            case 4:
-                printf("\033[0;32m Enter the size of the median filter: \033[0m");
-                int filter_size;
-                scanf("%d", &filter_size);
-                while (filter_size < 3 || filter_size > 19) {
-                    printf("\033[0;33m Error: filter size must be between 3 and 19\n \033[0m");
-                    printf("\033[0;32m Enter the size of the median filter: \033[0m");
-                    scanf("%d", &filter_size);
-                }
-                apply_median_filter(pixels, info_header.biWidth, info_header.biHeight, row_size, filter_size);
-                break;
-            default:
-                printf("\033[0;33m Invalid choice\n \033[0m");
-                break;
-            }
+    
     default:
         printf("\033[0;33m Invalid choice\n \033[0m");
         break;
         
         }
-
-    }
-
 }
+
