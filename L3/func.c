@@ -51,31 +51,37 @@ int compare(const void* a, const void* b) {
     return (*(const unsigned char*)a - *(const unsigned char*)b);
 }
 void apply_median_filter(RGBTRIPLE* pixels, int width, int height, int row_size, int filter_size) {
-    RGBTRIPLE* temp_pixels = malloc(row_size * height);
-    memcpy(temp_pixels, pixels, row_size * height);
+    MedianFilterData data;
+    data.temp_pixels = malloc(row_size * height);
+    memcpy(data.temp_pixels, pixels, row_size * height);
+    data.pixels = pixels;
+    data.width = width;
+    data.height = height;
+    data.row_size = row_size;
+    data.filter_size = filter_size;
+    data.half_filter_size = filter_size / 2;
 
-    int half_filter_size = filter_size / 2;
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
-            apply_median_filter_to_pixel(temp_pixels, pixels, width, height, row_size, filter_size, half_filter_size, i, j);
+            apply_median_filter_to_pixel(&data, i, j);
         }
     }
-    free(temp_pixels);
+    free(data.temp_pixels);
 }
-void apply_median_filter_to_pixel(RGBTRIPLE* temp_pixels, RGBTRIPLE* pixels, int width, int height, int row_size, int filter_size, int half_filter_size, int i, int j) {
-    unsigned char* window_red = malloc(filter_size * filter_size * sizeof(unsigned char));
-    unsigned char* window_green = malloc(filter_size * filter_size * sizeof(unsigned char));
-    unsigned char* window_blue = malloc(filter_size * filter_size * sizeof(unsigned char));
+void apply_median_filter_to_pixel(MedianFilterData* data, int i, int j) {
+    unsigned char* window_red = malloc(data->filter_size * data->filter_size * sizeof(unsigned char));
+    unsigned char* window_green = malloc(data->filter_size * data->filter_size * sizeof(unsigned char));
+    unsigned char* window_blue = malloc(data->filter_size * data->filter_size * sizeof(unsigned char));
     int window_index = 0;
-    for (int k = -half_filter_size; k <= half_filter_size; k++) {
-        for (int l = -half_filter_size; l <= half_filter_size; l++) {
-            add_pixel_to_window(temp_pixels, width, height, row_size, i, j, k, l, &window_index, &window_red, &window_green, &window_blue);
+    for (int k = -data->half_filter_size; k <= data->half_filter_size; k++) {
+        for (int l = -data->half_filter_size; l <= data->half_filter_size; l++) {
+            add_pixel_to_window(data, i, j, k, l, &window_index, &window_red, &window_green, &window_blue);
         }
     }
     qsort(window_red, window_index, sizeof(unsigned char), compare);
     qsort(window_green, window_index, sizeof(unsigned char), compare);
     qsort(window_blue, window_index, sizeof(unsigned char), compare);
-    RGBTRIPLE* pixel = pixels + row_size / sizeof(RGBTRIPLE) * i + j;
+    RGBTRIPLE* pixel = data->pixels + data->row_size / sizeof(RGBTRIPLE) * i + j;
     pixel->rgbtRed = window_red[window_index / 2];
     pixel->rgbtGreen = window_green[window_index / 2];
     pixel->rgbtBlue = window_blue[window_index / 2];
@@ -83,15 +89,15 @@ void apply_median_filter_to_pixel(RGBTRIPLE* temp_pixels, RGBTRIPLE* pixels, int
     free(window_green);
     free(window_blue);
 }
-void add_pixel_to_window(RGBTRIPLE* temp_pixels, int width, int height, int row_size, int i, int j, int k, int l, int* window_index, unsigned char** window_red, unsigned char** window_green, unsigned char** window_blue) {
+void add_pixel_to_window(MedianFilterWindowData* data, int i, int j, int k, int l) {
     int x = j + l;
     int y = i + k;
-    if (x >= 0 && x < width && y >= 0 && y < height) {
-        RGBTRIPLE* pixel = temp_pixels + row_size / sizeof(RGBTRIPLE) * y + x;
-        (*window_red)[*window_index] = pixel->rgbtRed;
-        (*window_green)[*window_index] = pixel->rgbtGreen;
-        (*window_blue)[*window_index] = pixel->rgbtBlue;
-        (*window_index)++;
+    if (x >= 0 && x < data->width && y >= 0 && y < data->height) {
+        RGBTRIPLE* pixel = data->temp_pixels + data->row_size / sizeof(RGBTRIPLE) * y + x;
+        (*data->window_red)[*data->window_index] = pixel->rgbtRed;
+        (*data->window_green)[*data->window_index] = pixel->rgbtGreen;
+        (*data->window_blue)[*data->window_index] = pixel->rgbtBlue;
+        (*data->window_index)++;
     }
 }
 int read_image(const char* input_file_name, BITMAPFILEHEADER* file_header, BITMAPINFOHEADER* info_header, RGBTRIPLE** pixels, int* row_size) {

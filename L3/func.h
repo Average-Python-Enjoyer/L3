@@ -31,6 +31,25 @@ typedef struct {
     unsigned char rgbtGreen;
     unsigned char rgbtRed;
 } RGBTRIPLE;
+typedef struct {
+    RGBTRIPLE* temp_pixels;
+    RGBTRIPLE* pixels;
+    int width;
+    int height;
+    int row_size;
+    int filter_size;
+    int half_filter_size;
+} MedianFilterData;
+typedef struct {
+    RGBTRIPLE* temp_pixels;
+    int width;
+    int height;
+    int row_size;
+    int* window_index;
+    unsigned char** window_red;
+    unsigned char** window_green;
+    unsigned char** window_blue;
+} MedianFilterWindowData;
 #pragma pack(pop)
 void negative(RGBTRIPLE* pixel);
 void black_and_white(RGBTRIPLE* pixel);
@@ -40,9 +59,9 @@ void save_image(const char* file_name, BITMAPFILEHEADER file_header, BITMAPINFOH
 void apply_gamma_correction(RGBTRIPLE* pixels, int width, int height, int row_size, float gamma);
 int compare(const void* a, const void* b);
 void apply_median_filter(RGBTRIPLE* pixels, int width, int height, int row_size, int filter_size);
-void apply_median_filter_to_pixel(RGBTRIPLE* temp_pixels, RGBTRIPLE* pixels, int width, int height, int row_size, int filter_size, int half_filter_size, int i, int j);
+void apply_median_filter_to_pixel(MedianFilterData* data, int i, int j);
 int read_image(const char* input_file_name, BITMAPFILEHEADER* file_header, BITMAPINFOHEADER* info_header, RGBTRIPLE** pixels, int* row_size);
 int present_menu();
-void add_pixel_to_window(RGBTRIPLE* temp_pixels, int width, int height, int row_size, int i, int j, int k, int l, int* window_index, unsigned char** window_red, unsigned char** window_green, unsigned char** window_blue);
+void add_pixel_to_window(MedianFilterWindowData* data, int i, int j, int k, int l);
 void process_choice(int choice, BITMAPFILEHEADER file_header, BITMAPINFOHEADER info_header, RGBTRIPLE* pixels, RGBTRIPLE* original_pixels, int row_size);
 #endif //INC_5_1_FUNCTIONS_H
